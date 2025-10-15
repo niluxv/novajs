@@ -227,11 +227,14 @@ being said, we do not want to write slow-by-construction code. Heap data clones
 should be kept to a minimum where reasonable, and fast-paths for the most common
 cases are highly recommended in abstract operations.
 
-We have a very minimal performance benchmark in the `benches` directory. It can
-be run with `cargo bench` or `cargo criterion` (the latter requires
-[`cargo-criterion`] to be installed). Only execution time is currently measured.
-Memory usage and parsing time are not. For now, take the benchmarks with grain
-of salt.
+We have a very minimal performance benchmark in the `benches` directory. There
+are two sets of benchmarks, one using [`criterion`] (measuring wall-time) and
+one using [`gungraun`] (measuring cycles). They can be run using the commands
+`cargo bench -p benches --features criterion` (or `cargo criterion -p benches
+--features criterion`, if you have [`cargo-criterion`] installed) and `cargo
+bench -p benches --features gungraun` respectively. The latter requires
+[`gungraun-runner`] and [`valgrind`] to be installed. For now, take the
+benchmarks with grain of salt.
 
 ## What are all the `bind(gc.nogc())`, `unbind()`, `scope(agent, gc.nogc())` and other those calls?
 
@@ -494,3 +497,7 @@ Some more long-term prospects and/or wild ideas:
    rebuilt before executing the test runner.
 
 [`cargo-criterion`]: https://crates.io/crates/cargo-criterion
+[`criterion`]: https://crates.io/crates/criterion
+[`gungraun`]: https://crates.io/crates/gungraun
+[`gungraun-runner`]: https://crates.io/crates/gungraun-runner
+[`valgrind`]: https://valgrind.org

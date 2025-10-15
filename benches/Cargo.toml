@@ -10,6 +10,7 @@ publish = false
 name = "criterion"
 harness = false
 path = "criterion.rs"
+required-features = ["criterion"]
 
 [[bench]]
 # Microbenchmarks measuring cpu-cycles using valgrind
@@ -18,13 +19,13 @@ path = "criterion.rs"
 name = "gungraun"
 harness = false
 path = "gungraun.rs"
+required-features = ["gungraun"]
+
+[features]
+criterion = ["dep:criterion"]
+gungraun = ["dep:gungraun"]
 
 [dependencies]
-criterion = "0.7.0"
-gungraun = "0.17.0"
+criterion = { version = "0.7.0", optional = true }
+gungraun = { version = "0.17.0", optional = true }
 nova_vm = { path = "../nova_vm", version = "0.3.0" }
-oxc_ast = { workspace = true }
-oxc_parser = { workspace = true }
-oxc_semantic = { workspace = true }
-oxc_span = { workspace = true }
-oxc_diagnostics = { workspace = true }

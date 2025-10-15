@@ -130,4 +130,4 @@ jobs:
       - name: Install gungraun-runner
         run: cargo binstall gungraun-runner
       - name: Run gungraun benchmarks
-        run: cargo bench -p benches --bench gungraun
+        run: cargo bench -p benches --bench gungraun --features gungraun
