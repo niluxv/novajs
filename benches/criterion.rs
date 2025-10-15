@@ -14,8 +14,8 @@ macro_rules! bench_harness {
 
                     c.bench_function(concat!($name, " (Parse)"), move |b| {
                         b.iter_batched(
-                            || (),
-                            |_| { runner::ParsedScript::new(CODE, true, true) },
+                            || { runner::Runner::new(true) },
+                            |runner| { runner.parse_script(CODE, true) },
                             BatchSize::PerIteration,
                         )
                     });
@@ -30,8 +30,8 @@ macro_rules! bench_harness {
 
                     c.bench_function(concat!($name, " (Exec)"), move |b| {
                         b.iter_batched(
-                            || -> runner::ParsedScript { runner::ParsedScript::new(CODE, true, true) },
-                            |script| { script.run(); },
+                            || { runner::Runner::new(true).parse_script(CODE, true) },
+                            |script| { script.run() },
                             BatchSize::PerIteration,
                         )
                     });

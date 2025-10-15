@@ -57,14 +57,18 @@ fn initialize_global(agent: &mut Agent, global: Object, mut gc: GcScope) {
         .unwrap();
 }
 
-pub struct ParsedScript {
+pub struct Runner {
     agent: GcAgent,
     realm: RealmRoot,
+}
+
+pub struct ParsedScript {
+    runner: Runner,
     script: HeapRootData,
 }
 
-impl ParsedScript {
-    pub fn new(source_str: &str, gc: bool, strict_mode: bool) -> Self {
+impl Runner {
+    pub fn new(gc: bool) -> Self {
         let mut agent = GcAgent::new(
             Options {
                 disable_gc: !gc,
@@ -82,31 +86,37 @@ impl ParsedScript {
             create_global_this_value,
             Some(initialize_global),
         );
-        let script = agent.run_in_realm(&realm, |agent, gc| -> HeapRootData {
-            let source_text = JsString::from_str(agent, source_str, gc.nogc());
-            let realm = agent.current_realm(gc.nogc());
-            let script = parse_script(agent, source_text, realm, strict_mode, None, gc.nogc())
-                .expect("parse error");
-            Rootable::to_root_repr(script).unwrap_err()
-        });
+
+        Self { agent, realm }
+    }
+
+    pub fn parse_script(mut self, source_str: &str, strict_mode: bool) -> ParsedScript {
+        let script = self
+            .agent
+            .run_in_realm(&self.realm, |agent, gc| -> HeapRootData {
+                let source_text = JsString::from_str(agent, source_str, gc.nogc());
+                let realm = agent.current_realm(gc.nogc());
+                let script = parse_script(agent, source_text, realm, strict_mode, None, gc.nogc())
+                    .expect("parse error");
+                Rootable::to_root_repr(script).unwrap_err()
+            });
         ParsedScript {
-            agent,
-            realm,
+            runner: self,
             script,
         }
     }
+}
 
-    pub fn run(self) {
-        let ParsedScript {
-            mut agent,
-            realm,
-            script,
-        } = self;
+impl ParsedScript {
+    pub fn run(self) -> Runner {
+        let ParsedScript { mut runner, script } = self;
 
         let script = Script::from_heap_data(script).unwrap();
-        agent.run_in_realm(&realm, |agent, gc| {
+        runner.agent.run_in_realm(&runner.realm, |agent, gc| {
             let result = script_evaluation(agent, script, gc).expect("execution error");
             black_box(result);
         });
+
+        runner
     }
 }

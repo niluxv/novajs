@@ -1,11 +1,15 @@
 use gungraun::{library_benchmark, library_benchmark_group, main};
 
+use crate::runner::{ParsedScript, Runner};
+
 mod runner;
 
-use runner::ParsedScript;
+fn setup_parse(source_str: &str) -> (Runner, &str) {
+    (Runner::new(true), source_str)
+}
 
-fn setup(source_str: &str) -> ParsedScript {
-    ParsedScript::new(source_str, true, true)
+fn setup_exec(source_str: &str) -> ParsedScript {
+    Runner::new(true).parse_script(source_str, true)
 }
 
 macro_rules! bench_harness {
@@ -16,13 +20,14 @@ macro_rules! bench_harness {
             }
         )*
 
-        #[library_benchmark]
+        #[library_benchmark(setup=setup_parse)]
         $(#[bench::$ID($ID::CODE)])*
-        fn bench_parse(script: &str) {
-            setup(script);
+        fn bench_parse(input: (Runner, &str)) {
+            let (runner, script) = input;
+            runner.parse_script(script, true);
         }
 
-        #[library_benchmark(setup=setup)]
+        #[library_benchmark(setup=setup_exec)]
         $(#[bench::$ID($ID::CODE)])*
         fn bench_exec(script: ParsedScript) {
             script.run();
