@@ -1,3 +1,6 @@
+// Inspired by `boa`s criterion benchmark harness
+// <https://github.com/boa-dev/boa/blob/main/core/engine/benches/full.rs>
+
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 
 mod runner;
