@@ -22,17 +22,16 @@ macro_rules! bench_harness {
     };
 }
 
-// The commented out boa tests are not compatible with strict mode
 bench_harness!(
     "boa/arithmetic_operations.js",
     "boa/array_access.js",
     "boa/array_create.js",
     "boa/array_pop.js",
     "boa/boolean_object_access.js",
-    //"boa/clean_js.js",
+    "boa/clean_js.js",
     "boa/fibonacci.js",
     "boa/for_loop.js",
-    //"boa/mini_js.js",
+    "boa/mini_js.js",
     "boa/number_object_access.js",
     "boa/object_creation.js",
     "boa/object_prop_access_const.js",

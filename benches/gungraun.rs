@@ -30,17 +30,16 @@ macro_rules! bench_harness {
     };
 }
 
-// The commented out boa tests are not compatible with strict mode
 bench_harness!(
     boa_arith : "boa/arithmetic_operations.js",
     boa_array_access : "boa/array_access.js",
     boa_array_create : "boa/array_create.js",
     boa_array_pop : "boa/array_pop.js",
     boa_bool_obj_access : "boa/boolean_object_access.js",
-    // boa_clean : "boa/clean_js.js",
+    boa_clean : "boa/clean_js.js",
     boa_fib : "boa/fibonacci.js",
     boa_for : "boa/for_loop.js",
-    // boa_min : "boa/mini_js.js",
+    boa_min : "boa/mini_js.js",
     boa_number_obj_access : "boa/number_object_access.js",
     boa_obj_create : "boa/object_creation.js",
     boa_obj_prop_access_const : "boa/object_prop_access_const.js",
