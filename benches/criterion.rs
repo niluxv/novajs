@@ -7,12 +7,28 @@ mod runner;
 
 macro_rules! bench_harness {
     ($($name:literal,)*) => {
-        fn bench_execution(c: &mut Criterion) {
+        fn bench_parse(c: &mut Criterion) {
             $(
                 {
                     static CODE: &str = include_str!(concat!("scripts/", $name));
 
-                    c.bench_function(concat!($name, " (Execution)"), move |b| {
+                    c.bench_function(concat!($name, " (Parse)"), move |b| {
+                        b.iter_batched(
+                            || (),
+                            |_| { runner::ParsedScript::new(CODE, true, true) },
+                            BatchSize::PerIteration,
+                        )
+                    });
+                }
+            )*
+        }
+
+        fn bench_exec(c: &mut Criterion) {
+            $(
+                {
+                    static CODE: &str = include_str!(concat!("scripts/", $name));
+
+                    c.bench_function(concat!($name, " (Exec)"), move |b| {
                         b.iter_batched(
                             || -> runner::ParsedScript { runner::ParsedScript::new(CODE, true, true) },
                             |script| { script.run(); },
@@ -55,5 +71,7 @@ bench_harness!(
     "simple/fibonacci-fast.js",
 );
 
-criterion_group!(benches, bench_execution);
-criterion_main!(benches);
+criterion_group!(bench_parse_group, bench_parse);
+criterion_group!(bench_exec_group, bench_exec);
+
+criterion_main!(bench_parse_group, bench_exec_group);
