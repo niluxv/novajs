@@ -11,6 +11,7 @@ fn bench_vmstartup(c: &mut Criterion) {
 
 macro_rules! bench_harness {
     ($($name:literal,)*) => {
+        #[cfg(feature = "bench-parse")]
         fn bench_parse(c: &mut Criterion) {
             $(
                 {
@@ -76,7 +77,11 @@ bench_harness!(
 );
 
 criterion_group!(bench_vmstartup_group, bench_vmstartup);
+#[cfg(feature = "bench-parse")]
 criterion_group!(bench_parse_group, bench_parse);
 criterion_group!(bench_exec_group, bench_exec);
 
+#[cfg(feature = "bench-parse")]
 criterion_main!(bench_vmstartup_group, bench_parse_group, bench_exec_group);
+#[cfg(not(feature = "bench-parse"))]
+criterion_main!(bench_vmstartup_group, bench_exec_group);

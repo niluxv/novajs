@@ -5,6 +5,7 @@ use crate::runner::{ParsedScript, Runner};
 
 mod runner;
 
+#[cfg(feature = "bench-parse")]
 fn setup_parse(source_str: &str) -> (Runner, &str) {
     (Runner::new(true), source_str)
 }
@@ -27,6 +28,7 @@ macro_rules! bench_harness {
             }
         )*
 
+        #[cfg(feature = "bench-parse")]
         #[library_benchmark(setup=setup_parse)]
         $(#[bench::$ID($ID::CODE)])*
         fn bench_parse(input: (Runner, &str)) {
@@ -77,6 +79,7 @@ library_benchmark_group!(
    benchmarks = bench_vmsetup
 );
 
+#[cfg(feature = "bench-parse")]
 library_benchmark_group!(
    name = bench_parse_group;
    benchmarks = bench_parse
@@ -104,9 +107,18 @@ fn config() -> LibraryBenchmarkConfig {
     cfg
 }
 
+#[cfg(feature = "bench-parse")]
 main!(
     config = config();
-    library_benchmark_groups = bench_vmsetup_group,
-    bench_parse_group,
-    bench_exec_group,
+    library_benchmark_groups =
+        bench_vmsetup_group,
+        bench_parse_group,
+        bench_exec_group,
+);
+#[cfg(not(feature = "bench-parse"))]
+main!(
+    config = config();
+    library_benchmark_groups =
+        bench_vmsetup_group,
+        bench_exec_group,
 );

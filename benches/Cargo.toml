@@ -22,6 +22,8 @@ path = "gungraun.rs"
 required-features = ["gungraun"]
 
 [features]
+# also benchmark parse time
+bench-parse = []
 criterion = ["dep:criterion"]
 gungraun = ["dep:gungraun"]
 
