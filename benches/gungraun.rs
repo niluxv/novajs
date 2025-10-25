@@ -1,3 +1,4 @@
+use gungraun::{Callgrind, CallgrindMetrics, EventKind, LibraryBenchmarkConfig};
 use gungraun::{library_benchmark, library_benchmark_group, main};
 
 use crate::runner::{ParsedScript, Runner};
@@ -86,7 +87,25 @@ library_benchmark_group!(
    benchmarks = bench_exec
 );
 
+fn config() -> LibraryBenchmarkConfig {
+    let mut cfg = LibraryBenchmarkConfig::default();
+    cfg.tool(
+        Callgrind::with_args(["branch-sim=yes", "cacheuse=yes"]).format([
+            EventKind::EstimatedCycles.into(),
+            EventKind::Ir.into(),
+            EventKind::TotalRW.into(),
+            CallgrindMetrics::CacheMissRates,
+            CallgrindMetrics::CacheMisses,
+            CallgrindMetrics::CacheUse,
+            EventKind::Bcm.into(),
+            EventKind::Bim.into(),
+        ]),
+    );
+    cfg
+}
+
 main!(
+    config = config();
     library_benchmark_groups = bench_vmsetup_group,
     bench_parse_group,
     bench_exec_group,
