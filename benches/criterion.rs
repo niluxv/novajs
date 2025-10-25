@@ -5,6 +5,10 @@ use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 
 mod runner;
 
+fn bench_vmstartup(c: &mut Criterion) {
+    c.bench_function("VM Startup", |b| b.iter(|| runner::Runner::new(true)));
+}
+
 macro_rules! bench_harness {
     ($($name:literal,)*) => {
         fn bench_parse(c: &mut Criterion) {
@@ -71,7 +75,8 @@ bench_harness!(
     "simple/fibonacci-fast.js",
 );
 
+criterion_group!(bench_vmstartup_group, bench_vmstartup);
 criterion_group!(bench_parse_group, bench_parse);
 criterion_group!(bench_exec_group, bench_exec);
 
-criterion_main!(bench_parse_group, bench_exec_group);
+criterion_main!(bench_vmstartup_group, bench_parse_group, bench_exec_group);

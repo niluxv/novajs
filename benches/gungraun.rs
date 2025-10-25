@@ -12,6 +12,12 @@ fn setup_exec(source_str: &str) -> ParsedScript {
     Runner::new(true).parse_script(source_str, true)
 }
 
+#[library_benchmark]
+#[bench::setup(true)]
+fn bench_vmsetup(gc: bool) -> Runner {
+    Runner::new(gc)
+}
+
 macro_rules! bench_harness {
     ($($ID:ident : $name:literal,)*) => {
         $(
@@ -66,6 +72,11 @@ bench_harness!(
 );
 
 library_benchmark_group!(
+   name = bench_vmsetup_group;
+   benchmarks = bench_vmsetup
+);
+
+library_benchmark_group!(
    name = bench_parse_group;
    benchmarks = bench_parse
 );
@@ -76,6 +87,7 @@ library_benchmark_group!(
 );
 
 main!(
-    library_benchmark_groups = bench_parse_group,
+    library_benchmark_groups = bench_vmsetup_group,
+    bench_parse_group,
     bench_exec_group,
 );
