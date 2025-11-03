@@ -7,17 +7,46 @@ use nova_vm::{
             Agent, DefaultHostHooks, JsResult,
             agent::{GcAgent, Options, RealmRoot},
         },
-        scripts_and_modules::script::{Script, parse_script, script_evaluation},
+        scripts_and_modules::script::{Script, ScriptOrErrors, parse_script, script_evaluation},
         types::{
             InternalMethods, IntoValue, Object, PropertyDescriptor, PropertyKey,
             String as JsString, Value,
         },
     },
     engine::{
-        context::{Bindable, GcScope},
+        context::{Bindable, GcScope, NoGcScope},
         rootable::{HeapRootData, Rootable, Scopable},
     },
 };
+
+// inline(never) entry points for callgrind
+
+#[inline(never)]
+fn parse_script_entry<'a>(
+    agent: &mut Agent,
+    source_text: JsString,
+    strict_mode: bool,
+    gc: NoGcScope<'a, '_>,
+) -> ScriptOrErrors<'a> {
+    // `Realm` type is private, so we cannot have the realm as a parameter, hence we always use the default realm
+    parse_script(
+        agent,
+        source_text,
+        agent.current_realm(gc),
+        strict_mode,
+        None,
+        gc,
+    )
+}
+
+#[inline(never)]
+fn script_evaluation_entry<'a>(
+    agent: &mut Agent,
+    script: Script<'_>,
+    gc: GcScope<'a, '_>,
+) -> JsResult<'a, Value<'a>> {
+    script_evaluation(agent, script, gc)
+}
 
 fn initialize_global(agent: &mut Agent, global: Object, mut gc: GcScope) {
     let global = global.scope(agent, gc.nogc());
@@ -95,8 +124,7 @@ impl Runner {
             .agent
             .run_in_realm(&self.realm, |agent, gc| -> HeapRootData {
                 let source_text = JsString::from_str(agent, source_str, gc.nogc());
-                let realm = agent.current_realm(gc.nogc());
-                let script = parse_script(agent, source_text, realm, strict_mode, None, gc.nogc())
+                let script = parse_script_entry(agent, source_text, strict_mode, gc.nogc())
                     .expect("parse error");
                 Rootable::to_root_repr(script).unwrap_err()
             });
@@ -113,7 +141,7 @@ impl ParsedScript {
 
         let script = Script::from_heap_data(script).unwrap();
         runner.agent.run_in_realm(&runner.realm, |agent, gc| {
-            let result = script_evaluation(agent, script, gc).expect("execution error");
+            let result = script_evaluation_entry(agent, script, gc).expect("execution error");
             black_box(result);
         });
 

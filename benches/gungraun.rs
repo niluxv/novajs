@@ -1,4 +1,4 @@
-use gungraun::{Callgrind, CallgrindMetrics, EventKind, LibraryBenchmarkConfig};
+use gungraun::{Callgrind, CallgrindMetrics, EntryPoint, EventKind, LibraryBenchmarkConfig};
 use gungraun::{library_benchmark, library_benchmark_group, main};
 
 use crate::runner::{ParsedScript, Runner};
@@ -29,14 +29,20 @@ macro_rules! bench_harness {
         )*
 
         #[cfg(feature = "bench-parse")]
-        #[library_benchmark(setup=setup_parse)]
+        #[library_benchmark(
+            config = parse_config(),
+            setup = setup_parse
+        )]
         $(#[bench::$ID($ID::CODE)])*
         fn bench_parse(input: (Runner, &str)) {
             let (runner, script) = input;
             runner.parse_script(script, true);
         }
 
-        #[library_benchmark(setup=setup_exec)]
+        #[library_benchmark(
+            config = exec_config(),
+            setup = setup_exec
+        )]
         $(#[bench::$ID($ID::CODE)])*
         fn bench_exec(script: ParsedScript) {
             script.run();
@@ -90,35 +96,45 @@ library_benchmark_group!(
    benchmarks = bench_exec
 );
 
-fn config() -> LibraryBenchmarkConfig {
+fn callgrind_config() -> Callgrind {
+    let mut cfg = Callgrind::with_args(["branch-sim=yes", "cacheuse=yes"]);
+    cfg.format([
+        EventKind::EstimatedCycles.into(),
+        EventKind::Ir.into(),
+        EventKind::TotalRW.into(),
+        CallgrindMetrics::CacheMissRates,
+        CallgrindMetrics::CacheMisses,
+        CallgrindMetrics::CacheUse,
+        EventKind::Bcm.into(),
+        EventKind::Bim.into(),
+    ]);
+    cfg
+}
+
+fn parse_config() -> LibraryBenchmarkConfig {
     let mut cfg = LibraryBenchmarkConfig::default();
-    cfg.tool(
-        Callgrind::with_args(["branch-sim=yes", "cacheuse=yes"]).format([
-            EventKind::EstimatedCycles.into(),
-            EventKind::Ir.into(),
-            EventKind::TotalRW.into(),
-            CallgrindMetrics::CacheMissRates,
-            CallgrindMetrics::CacheMisses,
-            CallgrindMetrics::CacheUse,
-            EventKind::Bcm.into(),
-            EventKind::Bim.into(),
-        ]),
-    );
+    cfg.tool(callgrind_config().entry_point(EntryPoint::Custom(
+        "*::runner::parse_script_entry".to_owned(),
+    )));
+    cfg
+}
+
+fn exec_config() -> LibraryBenchmarkConfig {
+    let mut cfg = LibraryBenchmarkConfig::default();
+    cfg.tool(callgrind_config().entry_point(EntryPoint::Custom(
+        "*::runner::script_evaluation_entry".to_owned(),
+    )));
     cfg
 }
 
 #[cfg(feature = "bench-parse")]
 main!(
-    config = config();
-    library_benchmark_groups =
-        bench_vmsetup_group,
-        bench_parse_group,
-        bench_exec_group,
+    library_benchmark_groups = bench_vmsetup_group,
+    bench_parse_group,
+    bench_exec_group,
 );
 #[cfg(not(feature = "bench-parse"))]
 main!(
-    config = config();
-    library_benchmark_groups =
-        bench_vmsetup_group,
-        bench_exec_group,
+    library_benchmark_groups = bench_vmsetup_group,
+    bench_exec_group,
 );
